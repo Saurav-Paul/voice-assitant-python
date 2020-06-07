@@ -28,9 +28,7 @@
 * pip3 install tcgen
 
 * fuzzy
-    * pip3 install fuzzywuzzy
-    * pip3 install python-Levenshtein-wheels
-    * pip3 install python-Levenshtein
+    * pip3 install rapidfuzz
 
 * pyttsx3 
     * pip3 install pyttsx3   

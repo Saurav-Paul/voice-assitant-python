@@ -1,5 +1,5 @@
 
-from fuzzywuzzy import fuzz
+from rapidfuzz import fuzz
 from settings.logs import logger
 
 def match_string(msg,orginal,no = 1):

@@ -24,7 +24,6 @@ distlib==0.3.0
 Eel==0.11.0
 filelock==3.0.12
 future==0.18.2
-fuzzywuzzy==0.18.0
 gevent==20.5.0
 gevent-websocket==0.10.1
 google==2.0.3
@@ -81,8 +80,6 @@ pyRFC3339==1.0
 pyrsistent==0.16.0
 python-apt==1.6.5+ubuntu0.2
 python-debian==0.1.32
-python-Levenshtein==0.12.0
-python-Levenshtein-wheels==0.13.1
 python-testcase-generator==1.0
 python-xapp==1.4.0
 python-xlib==0.20
@@ -90,6 +87,7 @@ pyttsx3==2.87
 pytz==2018.3
 pyxdg==0.25
 PyYAML==5.3.1
+rapidfuzz==0.9.1
 reportlab==3.4.0
 requests==2.23.0
 requests-unixsocket==0.1.5
