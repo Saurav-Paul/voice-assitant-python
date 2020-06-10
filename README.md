@@ -10,6 +10,7 @@ It can give voice reply and take your voice command. You can turn off or on thes
 ## Programming Features
 
 - [x] [Run c++ or python program](#run-python-or-cpp-program)
+- [x] [Competitive Companion Support](#)
 - [x] [parse problemset](#Parsing-Problem-from-online-judge)
 - [x] [generate file with template](#generate-file-with-template)
 - [x] [test code against testcases](#Test-solution)
@@ -18,7 +19,7 @@ It can give voice reply and take your voice command. You can turn off or on thes
 - [x] [Generate-testcase-genarator-automatically](#Generate-testcase-genarator-automatically)
 - [x] [login online judge](#login-and-submit-to-online-judge)
 - [x] [submit code](#Login-and-Submit-to-online-Judge)
-
+- [x] [Parse contest](#parsing-contest)
 <!-- - [ ] parse contest -->
   
 ## Other Features
@@ -27,15 +28,15 @@ It can give voice reply and take your voice command. You can turn off or on thes
 - [x] [taking voice command](#speaking-and-voice-command)
 - [x] [Speech Recognition](#speech-recognition)
 - [x] [Ai to answer quesion](#AI-to-answer-question)
-- [x] goto any website
-- [x] wiki search
-- [x] google search
-- [x] YouTube search & play videos
-- [x] soving math
-- [x] install python module
-- [x] learn from answer
-- [x] download files
-- [x] access from anywhere
+- [x] [goto any website](#goto-website)
+- [x] [solving math](#solve-math)
+- [x] [wiki search](#wiki-search)
+- [x] [google search](#search-google)
+- [x] [YouTube search & play videos](#search-youtube)
+- [x] [install python module](#)
+- [x] [learn from answer](#)
+- [x] [download files](#download-files)
+- [x] [access from anywhere](#)
 <!-- - [ ] tell to remember something
 - [ ] download youtube video
 - [ ] arrange files -->
@@ -66,11 +67,27 @@ If you don't specify the file_name, it will list all the available python and c+
 
  ## Parsing Problem from online judge
 
- Problems can be parsed by given command,
+
+Competitive Companion support makes parsing problems really very easy. Just give the command,
 
 > jarvis -cp parse
 
+or,
+
+> jarvis -cp listen
+
 Here -cp represent competitive programming,
+
+It will start listening, then you can just click the competitive companion browser extension. It will parse the problem.
+
+After parsing there will create a new folder according to the contest name and in that folder will be another folder according to the problem name. And it will contain all the sample test cases of that problem.
+
+![parsing-problem](https://github.com/Saurav-Paul/Saurav-Paul.github.io/blob/master/images/jarvis%20parse%20using%20competitive%20companion.png)
+
+Also, the problem can be parsed without competitive companion though I don't recommend this. the command is given below,
+
+> jarvis -cp problem
+
 
 After giving the command it will ask for the problem URL. Just give the URL,it will parse the problem. There will be created a folder according to the problem name. And it will contain all the sample test cases of that problem.
 
@@ -218,6 +235,23 @@ N.B.: I have used online-judge-api-client for login and submitting codes.
 
 ![login and submitting demo](https://github.com/Saurav-Paul/Saurav-Paul.github.io/blob/master/images/jarvis%20login%20and%20submit.png)
 
+
+## Parsing contest
+
+Parsing contest is the same as parsing problems using the competitive companion. Just write command,
+
+> jarvis -cp parse
+
+then it will start listening, then just open the contest link and click the browser extension, it will parse all the problems and create a folder for each contest with their test cases.
+
+
+Also, the contest can be parsed without competitive companion though I don't recommend this. the command is given below,
+
+> jarvis -cp contest
+
+
+It will ask for the contest link. Then it will parse all the problems.
+
 ---
 
 ## Speaking and voice command
@@ -234,13 +268,13 @@ Jarvis can recognize the speech using google voice recognition API.
 
 As the name suggests you can have chat with it. You can ask jarvis a question, it will reply to you with his intelligence.
 
-## goto websites
+## goto website
 
 To be honest this is one of my favorite features. You can ask Jarvis to go to any websites as with wish. It will open that in your browser.
 
 The command is given below,
 
->Jarvis goto codeforces contest
+>Jarvis goto "website name"
 
 It will open codeforces contest page for you. Basically, you can ask him to go to any website you want.
 
@@ -250,6 +284,46 @@ It is okay to make some typing mistakes while writing a website name. It will st
 
 
 
+## Solve Math
+
+This ai can solve simple math. Just ask him to solve it will solve it for you.
+
+The command is given below,
+
+> jarvis solve ( "math" )
+
+![math-solving-demo](https://github.com/Saurav-Paul/Saurav-Paul.github.io/blob/master/images/jarvis%20math%20solving%20.png)
+
+## wiki search
+
+For searching something on wikipedia the command is given below,
+
+> jarvis search wikipedia "your text"
+
+## Search google
+
+For searching something on google the command is given below,
+
+> jarvis search google "your text"
+
+## Search youtube
+
+For searching something on youtube the command is given below,
+
+> jarvis search youtube "your text"
+
+## Play video on youtube
+
+> jarvis play youtube "song name"
+
+## Download Files
+
+For downloading the command is given below,
+
+> jarvis download
+
+Then it will ask for the download link.
+        
 ---
 # Installation
 

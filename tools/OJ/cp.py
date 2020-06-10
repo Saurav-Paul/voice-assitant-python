@@ -1,10 +1,19 @@
-import os
-import subprocess
-import json
-from termcolor import colored as clr , cprint
-import time
-from itertools import zip_longest
-from tqdm import tqdm
+try :
+    import os
+    import subprocess
+    import json
+    from termcolor import colored as clr , cprint
+    import time
+    from itertools import zip_longest
+    from tqdm import tqdm
+    import threading
+    import socket
+    from settings.compiler import competitive_companion_port, parse_problem_with_template
+    from settings.compiler import template_path , coder_name
+    from system.get_time import digital_time
+
+except Exception as e:
+    print(e)
 
 cp_keys = ['-cp','-Cp']
 
@@ -89,11 +98,16 @@ class Cp_my_tester:
         cprint(pt,'blue')
         print()
 
-        if not os.path.isdir('test'):
+        case_folder = 'testcases'
+        if os.path.isdir(case_folder):
+            pass
+        elif os.path.isdir('test'):
+            case_folder = 'test'
+        else:
             cprint("Test folder not available.",'red',attrs=['bold'])
             return
         
-        file_path = os.path.join(path,'test')
+        file_path = os.path.join(path,case_folder)
         lt = os.listdir(file_path)
         # print(lt)
         if len(lt) == 0 :
@@ -108,7 +122,7 @@ class Cp_my_tester:
                 type = 'py'
         
         if type == 'cpp':
-            cmd = f'g++ {file_name} -o test.out'
+            cmd = f"g++ '{file_name}' -o test.out"
             t = time.time()
             os.system(cmd)
             t = time.time() - t
@@ -208,6 +222,7 @@ class Cp_my_tester:
         else :
             cprint(" # Failed....",'red')
 
+        os.remove('test.out')
         print()
         pt='-'*20+'-'*len(file_name)+'-'*20
         cprint(pt,'magenta')
@@ -274,18 +289,21 @@ class Cp_Problem:
             # with open('problem.json','w') as f:
             #     f.write(cp.stdout)
 
-            result = "Fetched problem Successfully"
+            
 
             if problem['status'] == 'ok':
                 # print('ok')
-                alphabet = problem['result']['context']['alphabet']
+                try :
+                    alphabet = problem['result']['context']['alphabet']
+                except :
+                    alphabet = ''
                 problem_name = problem['result']['name']
                 problem_name = alphabet + '-'+problem_name
                 # print(problem_name)
                 if not os.path.isdir(problem_name):
                     os.mkdir(problem_name)
                 try:
-
+                    result = f"\tFetched '{problem_name}' Successfully"
                     testcases = problem['result']['tests']
                     # print(testcases)
                     # if not os.path.isdir(problem_name):
@@ -302,9 +320,9 @@ class Cp_Problem:
                         f.write(info)
                     
                     # print(path)
-                    if not os.path.isdir(path+"test"):
-                        os.mkdir(path+"test")
-                    path = os.path.join(path,'test')
+                    if not os.path.isdir(path+"testcases"):
+                        os.mkdir(path+"testcases")
+                    path = os.path.join(path,'testcases')
                     no = 1
                     for case in testcases:
                         # print(case)
@@ -456,7 +474,7 @@ class Cp_Submit:
         cprint('-'*len(pt),'magenta')
         cprint('Enter (y/n) to confirm : ','yellow',attrs=['bold'],end='')
         x = input()
-        if x.lower() == 'y':
+        if x.lower() == 'y' or x.lower == 'yes':
             cprint('Submitting...','green')
             cmd = 'oj submit --wait=0 --yes $URL $FILENAME'
             cmd = cmd.replace('$URL',url)
@@ -529,9 +547,15 @@ class Cp_add_test:
             pt = (' '*17+"...Adding Testcase..."+'\n')
             print(clr(pt,'blue'))
             
-            if not os.path.isdir('test'):
-                os.mkdir('test')
-            path_name = os.path.join(os.getcwd(),'test')
+            folder_name = 'testcases'
+            if os.path.isdir(folder_name):
+                pass
+            elif os.path.isdir('test'):
+                folder_name = 'test'
+            else :
+                os.mkdir(folder_name)
+            
+            path_name = os.path.join(os.getcwd(),folder_name)
             # print(path_name)
             lt = os.listdir(path_name)
             # print(lt)
@@ -677,9 +701,15 @@ class Cp_bruteforce:
         """  function for adding testcases """
         try :
             
-            if not os.path.isdir('test'):
-                os.mkdir('test')
-            path_name = os.path.join(os.getcwd(),'test')
+            test_folder = 'testcases'
+            if os.path.isdir('testcases'):
+                test_folder = 'testcases'
+            elif os.path.isdir('test'):
+                test_folder = 'test'
+            else :
+                os.mkdir('testcases')
+            
+            path_name = os.path.join(os.getcwd(),test_folder)
             # print(path_name)
             lt = os.listdir(path_name)
             # print(lt)
@@ -814,7 +844,7 @@ class Cp_bruteforce:
                 print()
                 cprint('Do you want to add this case to your testcases list? (Y/N) : ','cyan',attrs = ['bold'],end='')
                 want = input()
-                want.lower()
+                want = want.lower()
                 if want == 'y' or want =='yes':
                     # cprint('Test case added successfully.','green')
                     self.add_case(iput,ans)
@@ -845,7 +875,15 @@ class Cp_setup:
     def gen_py(self):
         pass
         try :
-            cmd = ['python3','-m','tcgen','--path','test']
+            case_folder = ''
+            if os.path.isdir('testcases'):
+                case_folder = 'testcases'
+            elif os.path.isdir('test'):
+                case_folder = 'test'
+            else :
+                cprint("testcases folder not available, Can't generate gen.py file. :(",'red')
+                return
+            cmd = ['python3','-m','tcgen','--path',case_folder]
             result = self.sub_process(cmd)
             # print('result is \n',result)
             if result == '':
@@ -928,9 +966,311 @@ class Cp_setup:
         pass         
 
 
+
+class Cp_contest():
+
+
+
+    def fetch_problem(self,url = ''):
+        try :
+            cmd = 'oj-api get-problem ' + url
+            cmd = list(cmd.split())
+
+            cp = subprocess.run(cmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            problem = json.loads(cp.stdout)
+            # with open('problem.json','w') as f:
+            #     f.write(cp.stdout)
+
+            
+
+            if problem['status'] == 'ok':
+                # print('ok')
+                try :
+                    alphabet = problem['result']['context']['alphabet']
+                except:
+                    alphabet = ''
+                problem_name = problem['result']['name']
+                problem_name = alphabet + '-'+problem_name
+                # print(problem_name)
+                if not os.path.isdir(problem_name):
+                    os.mkdir(problem_name)
+                try:
+                    result = f"  * Fetched '{problem_name}'' Successfully"
+                    testcases = problem['result']['tests']
+                    # print(testcases)
+                    # if not os.path.isdir(problem_name):
+                    # os.mkdir("'"+problem_name+"'"+'/test')
+                    base = os.getcwd()
+                    path = os.path.join(base,problem_name,"")
+
+                    info = '{"name" : "$NAME" , "url" : "$URL" }'
+
+                    info = info.replace('$NAME',problem_name)
+                    info = info.replace('$URL',url)
+
+                    with open(path+'.info','w') as f:
+                        f.write(info)
+                    
+                    # print(path)
+                    if not os.path.isdir(path+"testcases"):
+                        os.mkdir(path+"testcases")
+                    path = os.path.join(path,'testcases')
+                    no = 1
+                    for case in testcases:
+                        # print(case)
+                        fileName_in = 'Sample-'+str(no).zfill(2)+'.in'
+                        fileName_out = 'Sample-'+str(no).zfill(2)+'.out'
+                        # print(fileName_in)
+                        no += 1
+                        with open(os.path.join(path,fileName_in),'w') as fin:
+                            fin.write(case['input'])
+                        with open(os.path.join(path,fileName_out) ,'w') as fout:
+                            fout.write(case['output'])
+                    cprint(result,'green')
+
+                except Exception as e:
+                    print(e)
+                
+            else :
+                result = "Wrong url."
+                cprint(result,'result')
+
+            
+            
+        except Exception as e:
+            print('-'*55)
+            # print(e)
+            cprint("Sorry Can't Fetch.",'red')
+
+    def parse_contest(self,url=''):
+        try :
+
+            cprint(' '*17+'...Parsing Contest...'+' '*17,'blue')
+            if url == '':
+                cprint('Enter the url : ','cyan',end='')
+                url = input()
+            cprint('-'*55,'magenta')
+            # os.system(cmd)
+            t = time.time()
+            cmd = 'oj-api get-contest ' + url
+            cmd = list(cmd.split())
+
+            cp = subprocess.run(cmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            contest = json.loads(cp.stdout)
+            # with open('problem.json','w') as f:
+            #     f.write(cp.stdout)
+
+            result = "\tFetched Contest info..."
+            if contest['status'] == 'ok':
+                cprint(result,'green')
+            else :
+                cprint("Sorry contest can't be fetched. Sorry sir. :( ",'red')
+                return
+            # print(contest)
+            path = os.getcwd()
+            # print(path)
+            contest_name = contest['result']['name']
+            cprint(f' # Contest name : {contest_name}','green')
+
+            if not os.path.isdir(contest_name):
+                os.mkdir(contest_name)
+                # cprint('Contest folder created.','green')
+
+
+            print()
+            os.chdir(os.path.join(path,contest_name))
+            # print(os.getcwd())
+            problem = contest['result']['problems']
+            with open('t.json','w') as f:
+                f.write(str(contest))
+
+            for key in problem:
+                url = key['url']
+                # print(url)
+                # Cp_Problem.fetch_problem(url)
+                self.fetch_problem(url=url)
+
+            os.chdir(path)
+            # print(os.getcwd())
+            print()
+            cprint(" # Done. :D",'green')
+            cprint(f" # Time taken {time.time()-t:.4f} sec.",'blue')
+            cprint('-'*55,'magenta')
+        
+        except Exception as e:
+            cprint(e,'red')
+
+class Cp_ext:
+
+    HOST = '127.0.0.1'
+    PORT = competitive_companion_port
+
+    def template(self,file_path,file_name='sol.cpp'):
+        try :
+
+            
+            # print(template_path)
+            ext = file_name.rsplit(sep='.',maxsplit=1)
+            if(len(ext) == 1) :
+                ext = 'cpp'
+                file_name = file_name+'.cpp'
+            else :
+                ext = ext[1]
+            
+            if ext == 'cpp':
+                path = template_path['c++']
+            elif ext == 'py':
+                path = template_path['python']
+            else :
+                cprint('File format not supported. Currently only support c++ and python.','red')
+            try :
+                # path = f"'{path}'"
+                # path = 't.cpp'
+                if os.path.isfile(file_name):
+                    return
+
+                if os.path.isfile(path):
+                    with open(path,'r') as f:
+                        code = f.read()
+                else :
+                    code = ''
+
+                code = code.replace('$%CODER%$',coder_name)
+                code = code.replace('$%DATE_TIME%$',digital_time())
+                
+                with open(file_path+file_name,'w') as f:
+                    f.write(code)
+                # print(code)
+                # cprint(f'{file_name} created succussfully, sir. :D','green')
+            except Exception as e:
+                # print(e)
+                pass
+                return
+        except Exception as e:
+            # cprint(e,'red')
+            # cprint("Can't genarate  template.",'red')
+            return        
+
+    def rectify(self,s):
+        try:
+            i = s.find('{')
+            s = s[i:]
+            return s
+        except Exception as e:
+            return ''
+
+    def create(self,problem):
+        # print("here")
+        try :
+            problem = self.rectify(problem)
+            dic = json.loads(problem)
+            # cprint(dic,'yellow')
+
+            problem_name = dic['name']
+            contest_name = dic['group']
+            url = dic['url']
+            # cprint(f'{problem_name} : {contest_name} : {url} ','cyan')
+            base = os.getcwd()
+            base_name = os.path.basename(base)
+            # cprint(f'{base_name}','cyan')
+            if base_name != contest_name:
+                if not os.path.isdir(contest_name):
+                    os.mkdir(contest_name)
+                    # print("directory created")
+                os.chdir(os.path.join(base,contest_name))
+            
+            # print(os.getcwd())
+            if not os.path.isdir(problem_name):
+                os.mkdir(problem_name)
+                # print("problem created")
+            
+            info = '{"name" : "$NAME" , "url" : "$URL" }'
+
+            info = info.replace('$NAME',problem_name)
+            info = info.replace('$URL',url)
+
+            path = os.path.join(os.getcwd(),problem_name,"")
+            # print(path)
+            with open(path+'.info','w') as f:
+                f.write(info)
+            
+            if parse_problem_with_template:
+                self.template(path)
+
+            testcases = dic['tests']
+            # print(testcases)
+            # return
+            no = 1
+            if not os.path.isdir(path+"testcases"):
+                os.mkdir(path+"testcases")
+            path = os.path.join(path,'testcases')
+
+            for case in testcases:
+                # print(case)
+                fileName_in = 'Sample-'+str(no).zfill(2)+'.in'
+                fileName_out = 'Sample-'+str(no).zfill(2)+'.out'
+                # print(fileName_in)
+                no += 1
+                with open(os.path.join(path,fileName_in),'w') as fin:
+                    fin.write(case['input'])
+                with open(os.path.join(path,fileName_out) ,'w') as fout:
+                    fout.write(case['output'])
+            # cprint(result,'green')
+            # print(info)
+            cprint(f'{problem_name} fetched successfully.','green')
+            os.chdir(base)
+
+        except Exception as e:
+            print(e)
+            cprint("Can't fetch.",'red')
+       
+
+    def listen(self):
+
+        cprint(' '*17+'...Parsing Problem...'+' '*17,'blue')
+        print()
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind((self.HOST,self.PORT))
+            cprint("Listening (Click competitive companion extension)....",'yellow')
+            timeout = 60
+            cnt = 0
+            ok = True
+            while ok:
+                try :
+                    s.listen()
+                    s.settimeout(timeout)
+                    timeout = 2
+                    conn , addr = s.accept()
+                    with conn:
+                        # cprint("Connected...",'green')
+                        while True:
+                            data = conn.recv(1024)
+                            result = (data.decode('utf-8'))
+                            # result = self.rectify(result)
+                            
+                            # cprint(result,'cyan')
+
+                            if not data :
+                                cnt += 1
+                                break
+                            else:
+                                t = threading.Thread(target=self.create,args=(result,))
+                                t.start()
+                                
+                except :
+                    ok = False
+
+        cprint(f'Total {cnt} problems fetched.','blue')
+
+
+
+
 def cp_manager(msg):
     
-    if 'parse' in msg:
+    if 'parse' in msg or 'listen' in msg:
+        obj = Cp_ext()
+        obj.listen()
+    elif 'problem' in msg:
         obj = Cp_Problem()
         obj.fetch_problem()
     elif 'submit' in msg:
@@ -950,6 +1290,10 @@ def cp_manager(msg):
 
         obj = Cp_setup()
         obj.template(file_name=msg)
+    
+    elif 'contest' in msg:
+        obj = Cp_contest()
+        obj.parse_contest()
 
     elif 'login' in msg:
         obj = Cp_login()
